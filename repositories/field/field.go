@@ -116,5 +116,10 @@ func (fr *FieldRepository) Update(ctx context.Context, uuid string, req *models.
 }
 
 func (fr *FieldRepository) Delete(ctx context.Context, uuid string) error {
+	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).Delete(&models.Field{}).Error
+	if err != nil {
+		return errWrap.WrapError(errConstant.ErrSQLError)
+	}
 
+	return nil
 }
