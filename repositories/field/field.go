@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	errWrap "field-service/common/error"
 	errConstant "field-service/constants/error"
+	errField "field-service/constants/error/field"
 	"field-service/domain/dto"
 	"field-service/domain/models"
 	"fmt"
@@ -66,7 +68,18 @@ func (fr *FieldRepository) FindAllWithoutPagination(ctx context.Context) ([]mode
 	return fields, nil
 }
 
-func (fr *FieldRepository) FindByUUID(context.Context, string) (*models.Field, error)
+func (fr *FieldRepository) FindByUUID(ctx context.Context, uuid string) (*models.Field, error) {
+	var field models.Field
+	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).First(&field).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errWrap.WrapError(errField.ErrFieldNotFound)
+		}
+		return nil, errWrap.WrapError(errConstant.ErrSQLError)
+	}
+
+	return &field, nil
+}
 
 func (fr *FieldRepository) Create(context.Context, *models.Field) (*models.Field, error)
 
