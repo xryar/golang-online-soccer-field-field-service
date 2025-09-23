@@ -56,7 +56,15 @@ func (fr *FieldRepository) FindAllWithPagination(ctx context.Context, param *dto
 
 }
 
-func (fr *FieldRepository) FindAllWithoutPagination(context.Context) ([]models.Field, error)
+func (fr *FieldRepository) FindAllWithoutPagination(ctx context.Context) ([]models.Field, error) {
+	var fields []models.Field
+	err := fr.db.WithContext(ctx).Find(&fields).Error
+	if err != nil {
+		return nil, errWrap.WrapError(errConstant.ErrSQLError)
+	}
+
+	return fields, nil
+}
 
 func (fr *FieldRepository) FindByUUID(context.Context, string) (*models.Field, error)
 
