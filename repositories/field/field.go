@@ -10,6 +10,7 @@ import (
 	"field-service/domain/models"
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -81,8 +82,39 @@ func (fr *FieldRepository) FindByUUID(ctx context.Context, uuid string) (*models
 	return &field, nil
 }
 
-func (fr *FieldRepository) Create(context.Context, *models.Field) (*models.Field, error)
+func (fr *FieldRepository) Create(ctx context.Context, req *models.Field) (*models.Field, error) {
+	field := models.Field{
+		UUID:         uuid.New(),
+		Code:         req.Code,
+		Name:         req.Name,
+		Images:       req.Images,
+		PricePerHour: req.PricePerHour,
+	}
 
-func (fr *FieldRepository) Update(context.Context, string, *models.Field) (*models.Field, error)
+	err := fr.db.WithContext(ctx).Create(&field).Error
+	if err != nil {
+		return nil, errWrap.WrapError(errConstant.ErrSQLError)
+	}
 
-func (fr *FieldRepository) Delete(context.Context, string) error
+	return &field, nil
+}
+
+func (fr *FieldRepository) Update(ctx context.Context, uuid string, req *models.Field) (*models.Field, error) {
+	field := models.Field{
+		Code:         req.Code,
+		Name:         req.Name,
+		Images:       req.Images,
+		PricePerHour: req.PricePerHour,
+	}
+
+	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).Updates(&field).Error
+	if err != nil {
+		return nil, errWrap.WrapError(errConstant.ErrSQLError)
+	}
+
+	return &field, nil
+}
+
+func (fr *FieldRepository) Delete(ctx context.Context, uuid string) error {
+
+}
