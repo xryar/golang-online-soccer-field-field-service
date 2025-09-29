@@ -25,7 +25,7 @@ type IFieldScheduleRepository interface {
 	FindByDateAndTimeID(context.Context, string, int, int) (*models.FieldSchedule, error)
 	Create(context.Context, []models.FieldSchedule) error
 	Update(context.Context, string, *models.FieldSchedule) (*models.FieldSchedule, error)
-	UpdateStatus(context.Context, constants.FieldScheduleStatus) (*models.FieldSchedule, error)
+	UpdateStatus(context.Context, constants.FieldScheduleStatus, string) error
 	Delete(context.Context, string) error
 }
 
@@ -121,24 +121,38 @@ func (fr *FieldScheduleRepository) Create(ctx context.Context, req []models.Fiel
 	return nil
 }
 
-func (fr *FieldScheduleRepository) Update(ctx context.Context, uuid string, req *models.Field) (*models.Field, error) {
-	field := models.Field{
-		Code:         req.Code,
-		Name:         req.Name,
-		Images:       req.Images,
-		PricePerHour: req.PricePerHour,
+func (fr *FieldScheduleRepository) Update(ctx context.Context, uuid string, req *models.FieldSchedule) (*models.FieldSchedule, error) {
+	fieldSchedule, err := fr.FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
 	}
 
-	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).Updates(&field).Error
+	fieldSchedule.Date = req.Date
+	err = fr.db.WithContext(ctx).Save(&fieldSchedule).Error
 	if err != nil {
 		return nil, errWrap.WrapError(errConstant.ErrSQLError)
 	}
 
-	return &field, nil
+	return fieldSchedule, nil
+}
+
+func (fr *FieldScheduleRepository) UpdateStatus(ctx context.Context, status constants.FieldScheduleStatus, uuid string) error {
+	fieldSchedule, err := fr.FindByUUID(ctx, uuid)
+	if err != nil {
+		return err
+	}
+
+	fieldSchedule.Status = status
+	err = fr.db.WithContext(ctx).Save(&fieldSchedule).Error
+	if err != nil {
+		return errWrap.WrapError(errConstant.ErrSQLError)
+	}
+
+	return nil
 }
 
 func (fr *FieldScheduleRepository) Delete(ctx context.Context, uuid string) error {
-	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).Delete(&models.Field{}).Error
+	err := fr.db.WithContext(ctx).Where("uuid = ?", uuid).Delete(&models.FieldSchedule{}).Error
 	if err != nil {
 		return errWrap.WrapError(errConstant.ErrSQLError)
 	}
