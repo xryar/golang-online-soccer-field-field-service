@@ -135,9 +135,54 @@ func (fs *FieldService) Create(ctx context.Context, req *dto.FieldRequest) (*dto
 }
 
 func (fs *FieldService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldRequest) (*dto.FieldResponse, error) {
+	field, err := fs.repository.GetField().FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	var imageUrl []string
+	if req.Images == nil {
+		imageUrl = field.Images
+	} else {
+		imageUrl, err = fs.uploadImage(ctx, req.Images)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	fieldResult, err := fs.repository.GetField().Update(ctx, uuid, &models.Field{
+		Code:         req.Code,
+		Name:         req.Name,
+		PricePerHour: req.PricePerHour,
+		Images:       imageUrl,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.FieldResponse{
+		UUID:         fieldResult.UUID,
+		Code:         fieldResult.Code,
+		Name:         fieldResult.Name,
+		PricePerHour: fieldResult.PricePerHour,
+		Images:       fieldResult.Images,
+		CreatedAt:    fieldResult.CreatedAt,
+		UpdatedAt:    fieldResult.UpdatedAt,
+	}, nil
 }
 
-func (fs *FieldService) Delete(ctx context.Context, uuid string) error {}
+func (fs *FieldService) Delete(ctx context.Context, uuid string) error {
+	_, err := fs.repository.GetField().FindByUUID(ctx, uuid)
+	if err != nil {
+		return err
+	}
+
+	err = fs.repository.GetField().Delete(ctx, uuid)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (fs *FieldService) validateUpdload(images []multipart.FileHeader) error {
 	if images == nil || len(images) == 0 {
