@@ -30,19 +30,77 @@ func NewFieldService(repository repositories.IRegistryRepository, gcs gcs.IGCSCl
 }
 
 func (fs *FieldService) GetAllPagination(ctx context.Context, param *dto.FieldRequestParam) (*util.PaginationResult, error) {
+	fields, total, err := fs.repository.GetField().FindAllWithPagination(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldResults := make([]dto.FieldResponse, 0, len(fields))
+	for _, field := range fields {
+		fieldResults = append(fieldResults, dto.FieldResponse{
+			UUID:         field.UUID,
+			Code:         field.Code,
+			Name:         field.Name,
+			PricePerHour: field.PricePerHour,
+			Images:       field.Images,
+			CreatedAt:    field.CreatedAt,
+			UpdatedAt:    field.UpdatedAt,
+		})
+	}
+
+	pagination := &util.PaginationParam{
+		Count: total,
+		Page:  param.Page,
+		Limit: param.Limit,
+		Data:  fieldResults,
+	}
+
+	response := util.GeneratePagination(*pagination)
+	return &response, nil
 }
 
 func (fs *FieldService) GetAllWithoutPagination(ctx context.Context) ([]dto.FieldResponse, error) {
+	fields, err := fs.repository.GetField().FindAllWithoutPagination(ctx)
+	if err != nil {
+		return nil, err
+	}
 
+	fieldResults := make([]dto.FieldResponse, 0, len(fields))
+	for _, field := range fields {
+		fieldResults = append(fieldResults, dto.FieldResponse{
+			UUID:         field.UUID,
+			Name:         field.Name,
+			PricePerHour: field.PricePerHour,
+			Images:       field.Images,
+		})
+	}
+
+	return fieldResults, nil
 }
 
-func (fs *FieldService) GetByUUID(ctx context.Context, fieldUUID string) (*dto.FieldResponse, error) {
+func (fs *FieldService) GetByUUID(ctx context.Context, uuid string) (*dto.FieldResponse, error) {
+	field, err := fs.repository.GetField().FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldResult := dto.FieldResponse{
+		UUID:         field.UUID,
+		Code:         field.Code,
+		Name:         field.Name,
+		PricePerHour: field.PricePerHour,
+		Images:       field.Images,
+		CreatedAt:    field.CreatedAt,
+		UpdatedAt:    field.UpdatedAt,
+	}
+
+	return &fieldResult, nil
 }
 
-func (fs *FieldService) Create(ctx context.Context, field *dto.FieldRequest) (*dto.FieldResponse, error) {
+func (fs *FieldService) Create(ctx context.Context, req *dto.FieldRequest) (*dto.FieldResponse, error) {
 }
 
-func (fs *FieldService) Update(ctx context.Context, fieldUUID string, field *dto.UpdateFieldRequest) (*dto.FieldResponse, error) {
+func (fs *FieldService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldRequest) (*dto.FieldResponse, error) {
 }
 
-func (fs *FieldService) Delete(ctx context.Context, fieldUUID string) error {}
+func (fs *FieldService) Delete(ctx context.Context, uuid string) error {}
