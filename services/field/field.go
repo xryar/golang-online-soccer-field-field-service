@@ -7,6 +7,7 @@ import (
 	"field-service/common/util"
 	errConstant "field-service/constants/error"
 	"field-service/domain/dto"
+	"field-service/domain/models"
 	"field-service/repositories"
 	"fmt"
 	"io"
@@ -105,6 +106,32 @@ func (fs *FieldService) GetByUUID(ctx context.Context, uuid string) (*dto.FieldR
 }
 
 func (fs *FieldService) Create(ctx context.Context, req *dto.FieldRequest) (*dto.FieldResponse, error) {
+	imageUrl, err := fs.uploadImage(ctx, req.Images)
+	if err != nil {
+		return nil, err
+	}
+
+	field, err := fs.repository.GetField().Create(ctx, &models.Field{
+		Code:         req.Code,
+		Name:         req.Name,
+		PricePerHour: req.PricePerHour,
+		Images:       imageUrl,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.FieldResponse{
+		UUID:         field.UUID,
+		Code:         field.Code,
+		Name:         field.Name,
+		PricePerHour: field.PricePerHour,
+		Images:       field.Images,
+		CreatedAt:    field.CreatedAt,
+		UpdatedAt:    field.UpdatedAt,
+	}
+
+	return response, nil
 }
 
 func (fs *FieldService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldRequest) (*dto.FieldResponse, error) {
