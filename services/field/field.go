@@ -1,11 +1,18 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"field-service/common/gcs"
 	"field-service/common/util"
+	errConstant "field-service/constants/error"
 	"field-service/domain/dto"
 	"field-service/repositories"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"path"
+	"time"
 )
 
 type FieldService struct {
@@ -104,3 +111,58 @@ func (fs *FieldService) Update(ctx context.Context, uuid string, req *dto.Update
 }
 
 func (fs *FieldService) Delete(ctx context.Context, uuid string) error {}
+
+func (fs *FieldService) validateUpdload(images []multipart.FileHeader) error {
+	if images == nil || len(images) == 0 {
+		return errConstant.ErrInvalidUploadFile
+	}
+
+	for _, image := range images {
+		if image.Size > 5*1024*1024 {
+			return errConstant.ErrSizeTooBig
+		}
+	}
+
+	return nil
+}
+
+func (fs *FieldService) processAndUploadImage(ctx context.Context, image multipart.FileHeader) (string, error) {
+	file, err := image.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	buffer := new(bytes.Buffer)
+	_, err = io.Copy(buffer, file)
+	if err != nil {
+		return "", err
+	}
+
+	filename := fmt.Sprintf("images/%s-%s-%s", time.Now().Format("20060102150405"), image.Filename, path.Ext(image.Filename))
+	url, err := fs.gcs.UploadFile(ctx, filename, buffer.Bytes())
+	if err != nil {
+		return "", err
+	}
+
+	return url, nil
+}
+
+func (fs *FieldService) uploadImage(ctx context.Context, images []multipart.FileHeader) ([]string, error) {
+	err := fs.validateUpdload(images)
+	if err != nil {
+		return nil, err
+	}
+
+	urls := make([]string, 0, len(images))
+	for _, image := range images {
+		url, err := fs.processAndUploadImage(ctx, image)
+		if err != nil {
+			return nil, err
+		}
+
+		urls = append(urls, url)
+	}
+
+	return urls, nil
+}
