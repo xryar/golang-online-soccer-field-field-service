@@ -6,6 +6,7 @@ import (
 	"field-service/domain/dto"
 	"field-service/repositories"
 	"fmt"
+	"time"
 )
 
 type FieldScheduleService struct {
@@ -76,3 +77,32 @@ func (fs *FieldScheduleService) UpdateStatus(ctx context.Context, req *dto.Updat
 }
 
 func (fs *FieldScheduleService) Delete(ctx context.Context, uuid string) error {}
+
+func (fs *FieldScheduleService) convertMonthName(inputDate string) string {
+	date, err := time.Parse(time.DateOnly, inputDate)
+	if err != nil {
+		return ""
+	}
+
+	indonesiaMonth := map[string]string{
+		"Jan": "Jan",
+		"Feb": "Feb",
+		"Mar": "Mar",
+		"Apr": "Apr",
+		"May": "Mei",
+		"Jun": "Jun",
+		"Jul": "Jul",
+		"Aug": "Agu",
+		"Sep": "Sep",
+		"Oct": "Okt",
+		"Nov": "Nov",
+		"Dec": "Des",
+	}
+
+	formattedDate := date.Format("02 Jan")
+	day := formattedDate[:3]
+	month := formattedDate[3:]
+	formattedDate = fmt.Sprintf("%s %s", day, indonesiaMonth[month])
+
+	return formattedDate
+}
