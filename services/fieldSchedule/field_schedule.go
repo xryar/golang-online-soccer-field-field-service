@@ -24,7 +24,7 @@ type IFieldScheduleService interface {
 	GetByUUID(context.Context, string) (*dto.FieldScheduleResponse, error)
 	GenerateScheduleForOneMonth(context.Context, *dto.GenerateFieldScheduleForOneMonthRequest) error
 	Create(context.Context, *dto.FieldScheduleRequest) error
-	Update(context.Context, *dto.FieldScheduleRequest) (*dto.FieldScheduleResponse, error)
+	Update(context.Context, string, *dto.UpdateFieldScheduleRequets) (*dto.FieldScheduleResponse, error)
 	UpdateStatus(context.Context, *dto.UpdateStatusFieldScheduleRequest) error
 	Delete(context.Context, string) error
 }
@@ -198,7 +198,57 @@ func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context,
 	return nil
 }
 
-func (fs *FieldScheduleService) Update(ctx context.Context, req *dto.FieldScheduleRequest) (*dto.FieldScheduleResponse, error) {
+func (fs *FieldScheduleService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldScheduleRequets) (*dto.FieldScheduleResponse, error) {
+	fieldSchedule, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	scheduleTime, err := fs.repository.GetTime().FindByUUID(ctx, req.TimeID)
+	if err != nil {
+		return nil, err
+	}
+
+	isTimeExist, err := fs.repository.GetFieldSchedule().FindByDateAndTimeID(ctx, req.Date, int(scheduleTime.ID), int(fieldSchedule.FieldID))
+	if err != nil {
+		return nil, err
+	}
+
+	if isTimeExist != nil && req.Date != fieldSchedule.Date.Format(time.DateOnly) {
+		checkDate, err := fs.repository.GetFieldSchedule().FindByDateAndTimeID(
+			ctx,
+			req.Date,
+			int(scheduleTime.ID),
+			int(fieldSchedule.FieldID),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if checkDate != nil {
+			return nil, errFieldSchedule.ErrFieldScheduleIsExist
+		}
+	}
+
+	dateParsed, _ := time.Parse(time.DateOnly, req.Date)
+	fieldResult, err := fs.repository.GetFieldSchedule().Update(ctx, uuid, &models.FieldSchedule{
+		Date:   dateParsed,
+		TimeID: scheduleTime.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	response := dto.FieldScheduleResponse{
+		UUID:         fieldResult.UUID,
+		FieldName:    fieldResult.Field.Name,
+		Date:         fieldResult.Date.Format(time.DateOnly),
+		PricePerHour: fieldResult.Field.PricePerHour,
+		Status:       fieldResult.Status.GetString(),
+		Time:         fmt.Sprintf("%s - %s", fieldResult.Time.StartTme, fieldResult.Time.EndTime),
+	}
+
+	return &response, nil
 }
 
 func (fs *FieldScheduleService) UpdateStatus(ctx context.Context, req *dto.UpdateStatusFieldScheduleRequest) error {
