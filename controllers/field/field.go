@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -108,8 +109,107 @@ func (fc *FieldController) GetByUUID(c *gin.Context) {
 	})
 }
 
-func (fc *FieldController) Create(c *gin.Context) {}
+func (fc *FieldController) Create(c *gin.Context) {
+	var request dto.FieldRequest
+	err := c.ShouldBindWith(&request, binding.FormMultipart)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
 
-func (fc *FieldController) Update(c *gin.Context) {}
+	validate := validator.New()
+	err = validate.Struct(request)
+	if err != nil {
+		errMessage := http.StatusText(http.StatusUnprocessableEntity)
+		errResponse := errValidation.ErrValidationResponse(err)
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code:    http.StatusBadRequest,
+			Err:     err,
+			Message: &errMessage,
+			Data:    errResponse,
+			Gin:     c,
+		})
+		return
+	}
 
-func (fc *FieldController) Delete(c *gin.Context) {}
+	result, err := fc.service.GetField().Create(c, &request)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	response.HttpResponse(response.ParamHTTPResponse{
+		Code: http.StatusOK,
+		Data: result,
+		Gin:  c,
+	})
+}
+
+func (fc *FieldController) Update(c *gin.Context) {
+	var request dto.UpdateFieldRequest
+	err := c.ShouldBindWith(&request, binding.FormMultipart)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(request)
+	if err != nil {
+		errMessage := http.StatusText(http.StatusUnprocessableEntity)
+		errResponse := errValidation.ErrValidationResponse(err)
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code:    http.StatusBadRequest,
+			Err:     err,
+			Message: &errMessage,
+			Data:    errResponse,
+			Gin:     c,
+		})
+		return
+	}
+
+	result, err := fc.service.GetField().Update(c, c.Param("uuid"), &request)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	response.HttpResponse(response.ParamHTTPResponse{
+		Code: http.StatusOK,
+		Data: result,
+		Gin:  c,
+	})
+}
+
+func (fc *FieldController) Delete(c *gin.Context) {
+	err := fc.service.GetField().Delete(c, c.Param("uuid"))
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	response.HttpResponse(response.ParamHTTPResponse{
+		Code: http.StatusOK,
+		Gin:  c,
+	})
+}
