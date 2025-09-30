@@ -86,6 +86,22 @@ func (fs *FieldScheduleService) GetAllByFieldIDAndDate(ctx context.Context, uuid
 }
 
 func (fs *FieldScheduleService) GetByUUID(ctx context.Context, uuid string) (*dto.FieldScheduleResponse, error) {
+	fieldSchedule, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.FieldScheduleResponse{
+		UUID:         fieldSchedule.UUID,
+		FieldName:    fieldSchedule.Field.Name,
+		PricePerHour: fieldSchedule.Field.PricePerHour,
+		Date:         fieldSchedule.Date.Format(time.DateOnly),
+		Status:       fieldSchedule.Status.GetString(),
+		CreatedAt:    fieldSchedule.CreatedAt,
+		UpdatedAt:    fieldSchedule.UpdatedAt,
+	}
+
+	return response, nil
 }
 
 func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context, req *dto.GenerateFieldScheduleForOneMonthRequest) error {
