@@ -252,9 +252,33 @@ func (fs *FieldScheduleService) Update(ctx context.Context, uuid string, req *dt
 }
 
 func (fs *FieldScheduleService) UpdateStatus(ctx context.Context, req *dto.UpdateStatusFieldScheduleRequest) error {
+	for _, item := range req.FieldScheduleIDs {
+		_, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, item)
+		if err != nil {
+			return err
+		}
+
+		err = fs.repository.GetFieldSchedule().UpdateStatus(ctx, constants.Booked, item)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (fs *FieldScheduleService) Delete(ctx context.Context, uuid string) error {}
+func (fs *FieldScheduleService) Delete(ctx context.Context, uuid string) error {
+	_, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, uuid)
+	if err != nil {
+		return err
+	}
+
+	err = fs.repository.GetFieldSchedule().Delete(ctx, uuid)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (fs *FieldScheduleService) convertMonthName(inputDate string) string {
 	date, err := time.Parse(time.DateOnly, inputDate)
