@@ -47,7 +47,7 @@ func (fs *FieldScheduleService) GetAllWithPagination(ctx context.Context, param 
 			Date:         schedule.Date.Format("2006-01-02"),
 			PricePerHour: schedule.Field.PricePerHour,
 			Status:       schedule.Status.GetString(),
-			Time:         fmt.Sprintf("%s - %s", schedule.Time.StartTme, schedule.Time.EndTime),
+			Time:         fmt.Sprintf("%s - %s", schedule.Time.StartTime, schedule.Time.EndTime),
 			CreatedAt:    schedule.CreatedAt,
 			UpdatedAt:    schedule.UpdatedAt,
 		})
@@ -81,7 +81,7 @@ func (fs *FieldScheduleService) GetAllByFieldIDAndDate(ctx context.Context, uuid
 		fieldScheduleResults = append(fieldScheduleResults, dto.FieldScheduleForBookingResponse{
 			UUID:         schedule.UUID,
 			Date:         fs.convertMonthName(schedule.Date.Format(time.DateOnly)),
-			Time:         fmt.Sprintf("%s - %s", schedule.Time.StartTme, schedule.Time.EndTime),
+			Time:         fmt.Sprintf("%s - %s", schedule.Time.StartTime, schedule.Time.EndTime),
 			Status:       schedule.Status.GetString(),
 			PricePerHour: util.RupiahFormat(&pricePerHour),
 		})
@@ -245,7 +245,7 @@ func (fs *FieldScheduleService) Update(ctx context.Context, uuid string, req *dt
 		Date:         fieldResult.Date.Format(time.DateOnly),
 		PricePerHour: fieldResult.Field.PricePerHour,
 		Status:       fieldResult.Status.GetString(),
-		Time:         fmt.Sprintf("%s - %s", fieldResult.Time.StartTme, fieldResult.Time.EndTime),
+		Time:         fmt.Sprintf("%s - %s", fieldResult.Time.StartTime, fieldResult.Time.EndTime),
 	}
 
 	return &response, nil
