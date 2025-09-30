@@ -59,7 +59,30 @@ func (fs *FieldScheduleService) GetAllWithPagination(ctx context.Context, param 
 	return &response, nil
 }
 
-func (fs *FieldScheduleService) GetAllByFieldIDAndDate(ctx context.Context, fieldID string, date string) ([]dto.FieldScheduleForBookingResponse, error) {
+func (fs *FieldScheduleService) GetAllByFieldIDAndDate(ctx context.Context, uuid, date string) ([]dto.FieldScheduleForBookingResponse, error) {
+	field, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldSchedules, err := fs.repository.GetFieldSchedule().FindAllByFieldIDAndDate(ctx, int(field.ID), date)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldScheduleResults := make([]dto.FieldScheduleForBookingResponse, 0, len(fieldSchedules))
+	for _, schedule := range fieldSchedules {
+		pricePerHour := float64(schedule.Field.PricePerHour)
+		fieldScheduleResults = append(fieldScheduleResults, dto.FieldScheduleForBookingResponse{
+			UUID:         schedule.UUID,
+			Date:         fs.convertMonthName(schedule.Date.Format(time.DateOnly)),
+			Time:         fmt.Sprintf("%s - %s", schedule.Time.StartTme, schedule.Time.EndTime),
+			Status:       schedule.Status.GetString(),
+			PricePerHour: util.RupiahFormat(&pricePerHour),
+		})
+	}
+
+	return fieldScheduleResults, nil
 }
 
 func (fs *FieldScheduleService) GetByUUID(ctx context.Context, uuid string) (*dto.FieldScheduleResponse, error) {

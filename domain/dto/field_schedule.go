@@ -39,7 +39,7 @@ type FieldScheduleResponse struct {
 
 type FieldScheduleForBookingResponse struct {
 	UUID         uuid.UUID                         `json:"uuid"`
-	PricePerHour int                               `json:"pricePerHour"`
+	PricePerHour string                            `json:"pricePerHour"`
 	Date         string                            `json:"date"`
 	Status       constants.FieldScheduleStatusName `json:"status"`
 	Time         string                            `json:"time"`
