@@ -17,7 +17,7 @@ type GenerateFieldScheduleForOneMonthRequest struct {
 	FieldID string `json:"fieldID" validate:"required"`
 }
 
-type UpdateFieldScheduleRequets struct {
+type UpdateFieldScheduleRequest struct {
 	Date   string `json:"date" validate:"required"`
 	TimeID string `json:"timeID" validate:"required"`
 }

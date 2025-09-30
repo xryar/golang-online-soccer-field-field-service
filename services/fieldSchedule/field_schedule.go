@@ -24,7 +24,7 @@ type IFieldScheduleService interface {
 	GetByUUID(context.Context, string) (*dto.FieldScheduleResponse, error)
 	GenerateScheduleForOneMonth(context.Context, *dto.GenerateFieldScheduleForOneMonthRequest) error
 	Create(context.Context, *dto.FieldScheduleRequest) error
-	Update(context.Context, string, *dto.UpdateFieldScheduleRequets) (*dto.FieldScheduleResponse, error)
+	Update(context.Context, string, *dto.UpdateFieldScheduleRequest) (*dto.FieldScheduleResponse, error)
 	UpdateStatus(context.Context, *dto.UpdateStatusFieldScheduleRequest) error
 	Delete(context.Context, string) error
 }
@@ -198,7 +198,7 @@ func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context,
 	return nil
 }
 
-func (fs *FieldScheduleService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldScheduleRequets) (*dto.FieldScheduleResponse, error) {
+func (fs *FieldScheduleService) Update(ctx context.Context, uuid string, req *dto.UpdateFieldScheduleRequest) (*dto.FieldScheduleResponse, error) {
 	fieldSchedule, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
