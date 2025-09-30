@@ -72,7 +72,23 @@ func (fc *FieldController) GetAllWithPagination(c *gin.Context) {
 	})
 }
 
-func (fc *FieldController) GetAllWithoutPagination(c *gin.Context) {}
+func (fc *FieldController) GetAllWithoutPagination(c *gin.Context) {
+	result, err := fc.service.GetField().GetAllWithoutPagination(c)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	response.HttpResponse(response.ParamHTTPResponse{
+		Code: http.StatusOK,
+		Data: result,
+		Gin:  c,
+	})
+}
 
 func (fc *FieldController) GetByUUID(c *gin.Context) {}
 
