@@ -3,10 +3,15 @@ package services
 import (
 	"context"
 	"field-service/common/util"
+	"field-service/constants"
+	errFieldSchedule "field-service/constants/error/fieldSchedule"
 	"field-service/domain/dto"
+	"field-service/domain/models"
 	"field-service/repositories"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type FieldScheduleService struct {
@@ -107,7 +112,45 @@ func (fs *FieldScheduleService) GetByUUID(ctx context.Context, uuid string) (*dt
 func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context, req *dto.GenerateFieldScheduleForOneMonthRequest) error {
 }
 
-func (fs *FieldScheduleService) Create(ctx context.Context, req *dto.FieldScheduleRequest) error {}
+func (fs *FieldScheduleService) Create(ctx context.Context, req *dto.FieldScheduleRequest) error {
+	field, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, req.FieldID)
+	if err != nil {
+		return err
+	}
+
+	fieldSchedules := make([]models.FieldSchedule, 0, len(req.TimeIDs))
+	dateParsed, _ := time.Parse(time.DateOnly, req.Date)
+	for _, timeID := range req.TimeIDs {
+		scheduleTime, err := fs.repository.GetTime().FindByUUID(ctx, timeID)
+		if err != nil {
+			return err
+		}
+
+		schedule, err := fs.repository.GetFieldSchedule().FindByDateAndTimeID(ctx, req.Date, int(scheduleTime.ID), int(field.ID))
+		if err != nil {
+			return err
+		}
+
+		if schedule != nil {
+			return errFieldSchedule.ErrFieldScheduleIsExist
+		}
+
+		fieldSchedules = append(fieldSchedules, models.FieldSchedule{
+			UUID:    uuid.New(),
+			FieldID: field.ID,
+			TimeID:  scheduleTime.ID,
+			Date:    dateParsed,
+			Status:  constants.Available,
+		})
+	}
+
+	err = fs.repository.GetFieldSchedule().Create(ctx, fieldSchedules)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (fs *FieldScheduleService) Update(ctx context.Context, req *dto.FieldScheduleRequest) (*dto.FieldScheduleResponse, error) {
 }
