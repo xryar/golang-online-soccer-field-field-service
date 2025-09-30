@@ -109,9 +109,6 @@ func (fs *FieldScheduleService) GetByUUID(ctx context.Context, uuid string) (*dt
 	return response, nil
 }
 
-func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context, req *dto.GenerateFieldScheduleForOneMonthRequest) error {
-}
-
 func (fs *FieldScheduleService) Create(ctx context.Context, req *dto.FieldScheduleRequest) error {
 	field, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, req.FieldID)
 	if err != nil {
@@ -142,6 +139,55 @@ func (fs *FieldScheduleService) Create(ctx context.Context, req *dto.FieldSchedu
 			Date:    dateParsed,
 			Status:  constants.Available,
 		})
+	}
+
+	err = fs.repository.GetFieldSchedule().Create(ctx, fieldSchedules)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fs *FieldScheduleService) GenerateScheduleForOneMonth(ctx context.Context, req *dto.GenerateFieldScheduleForOneMonthRequest) error {
+	field, err := fs.repository.GetFieldSchedule().FindByUUID(ctx, req.FieldID)
+	if err != nil {
+		return err
+	}
+
+	times, err := fs.repository.GetTime().FindAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	numberOfDays := 30
+	fieldSchedules := make([]models.FieldSchedule, 0, numberOfDays)
+	now := time.Now().Add(time.Duration(1) * 24 * time.Hour)
+	for i := 0; i < numberOfDays; i++ {
+		currentDate := now.AddDate(0, 0, i)
+		for _, item := range times {
+			schedule, err := fs.repository.GetFieldSchedule().FindByDateAndTimeID(
+				ctx,
+				currentDate.Format(time.DateOnly),
+				int(item.ID),
+				int(field.ID),
+			)
+			if err != nil {
+				return err
+			}
+
+			if schedule != nil {
+				return errFieldSchedule.ErrFieldScheduleIsExist
+			}
+
+			fieldSchedules = append(fieldSchedules, models.FieldSchedule{
+				UUID:    uuid.New(),
+				FieldID: field.ID,
+				TimeID:  item.ID,
+				Date:    currentDate,
+				Status:  constants.Available,
+			})
+		}
 	}
 
 	err = fs.repository.GetFieldSchedule().Create(ctx, fieldSchedules)
