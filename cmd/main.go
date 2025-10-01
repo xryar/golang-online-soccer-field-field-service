@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"encoding/base64"
+	"field-service/common/gcs"
 	"field-service/common/response"
 	"field-service/config"
 	"field-service/constants"
@@ -94,4 +96,32 @@ func Run() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func initGCS() gcs.IGCSClient {
+	decode, err := base64.StdEncoding.DecodeString(config.Config.GCSPrivateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	stringPrivateKey := string(decode)
+	gcsServiceAccount := gcs.ServiceAccountKeyJSON{
+		Type:                    config.Config.GCSType,
+		ProjectID:               config.Config.GCSProjectID,
+		PrivateKeyID:            config.Config.GCSPrivateKeyID,
+		PrivateKey:              stringPrivateKey,
+		ClientEmail:             config.Config.GCSClientEmail,
+		ClientID:                config.Config.GCSClientID,
+		AuthURI:                 config.Config.GCSAuthURI,
+		TokenURI:                config.Config.GCSTokenURI,
+		AuthProviderX509CertURL: config.Config.GCSAuthProviderX509CertURL,
+		ClientX509CertURL:       config.Config.GCSClientX509CertURL,
+		UniverseDomain:          config.Config.GCSUniverseDomain,
+	}
+	gcsClient := gcs.NewGCSClient(
+		gcsServiceAccount,
+		config.Config.GCSBucketName,
+	)
+
+	return gcsClient
 }
