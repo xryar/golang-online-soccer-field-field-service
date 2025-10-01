@@ -19,7 +19,7 @@ type IFieldSchedule interface {
 	Run()
 }
 
-func NewFieldScheduleRoute(router gin.Engine, controller controllers.IRegistryController, client clients.IRegistryClient) IFieldSchedule {
+func NewFieldScheduleRoute(router *gin.Engine, controller controllers.IRegistryController, client clients.IRegistryClient) IFieldSchedule {
 	return &FieldScheduleRoute{
 		controller: controller,
 		group:      router.Group("/field"),
