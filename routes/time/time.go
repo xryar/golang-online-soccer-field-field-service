@@ -15,14 +15,14 @@ type TimeRoute struct {
 	client     clients.IRegistryClient
 }
 
-type ITime interface {
+type ITimeRoute interface {
 	Run()
 }
 
-func NewTimeRoute(router *gin.Engine, controller controllers.IRegistryController, client clients.IRegistryClient) ITime {
+func NewTimeRoute(controller controllers.IRegistryController, group *gin.RouterGroup, client clients.IRegistryClient) ITimeRoute {
 	return &TimeRoute{
 		controller: controller,
-		group:      router.Group("/time"),
+		group:      group,
 		client:     client,
 	}
 }
