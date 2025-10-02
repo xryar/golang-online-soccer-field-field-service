@@ -1,12 +1,14 @@
 package services
 
 import (
+	errValidation "field-service/common/error"
 	"field-service/common/response"
 	"field-service/domain/dto"
 	"field-service/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type TimeController struct {
@@ -61,6 +63,31 @@ func (tc *TimeController) GetByUUID(c *gin.Context) {
 
 func (tc *TimeController) Create(c *gin.Context) {
 	var request dto.TimeRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  err,
+			Gin:  c,
+		})
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(request)
+	if err != nil {
+		errMessage := http.StatusText(http.StatusUnprocessableEntity)
+		errResponse := errValidation.ErrValidationResponse(err)
+		response.HttpResponse(response.ParamHTTPResponse{
+			Code:    http.StatusBadRequest,
+			Err:     err,
+			Message: &errMessage,
+			Data:    errResponse,
+			Gin:     c,
+		})
+		return
+	}
+
 	result, err := tc.service.GetTime().Create(c, &request)
 	if err != nil {
 		response.HttpResponse(response.ParamHTTPResponse{
