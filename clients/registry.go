@@ -20,7 +20,7 @@ func (rc *RegistryClient) GetUser() userConfig.IUserClient {
 	return userConfig.NewUserClient(
 		fieldConfig.NewClientConfig(
 			fieldConfig.WithBaseURL(config.Config.InternalService.User.Host),
-			fieldConfig.WithSignatureKey(config.Config.SignatureKey),
+			fieldConfig.WithSignatureKey(config.Config.InternalService.User.SignatureKey),
 		),
 	)
 }

@@ -67,7 +67,7 @@ var command = &cobra.Command{
 		router.GET("/", func(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, response.Response{
 				Status:  constants.Success,
-				Message: "Welcome to User Service",
+				Message: "Welcome to Field Service",
 			})
 		})
 		router.Use(func(ctx *gin.Context) {
